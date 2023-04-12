@@ -38,6 +38,7 @@ public class WebMvcConfigure implements WebMvcConfigurer {
 
         registry.addInterceptor(tokenInterceptor)
                 .addPathPatterns("/*/**")
+                .excludePathPatterns("/chat/**")
                 .excludePathPatterns("/swagger-resources/**")
                 .excludePathPatterns("/webjars/**")
                 .excludePathPatterns("/v2/**")
