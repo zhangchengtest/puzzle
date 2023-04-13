@@ -43,6 +43,11 @@
             <version>4.3.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>com.cunw</groupId>
+            <artifactId>tid</artifactId>
+            <version>4.3.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jjwt.version}</version>
