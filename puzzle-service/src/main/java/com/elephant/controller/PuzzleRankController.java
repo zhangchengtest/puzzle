@@ -99,7 +99,7 @@ public class PuzzleRankController extends BaseController implements PuzzleRankAp
 
         PageList<PuzzleRank> pageList = puzzleRankService.queryForPage( dto.getPageNum(), dto.getPageSize(), lambdaQuery);
 
-        PageList<PuzzleRankVO> backendOrderList = mappingService.mapping(pageList, PuzzleRankVO.class);
-        return success(backendOrderList);
+        PageList<PuzzleRankVO> puzzleRankVOPageList = mappingService.mapping(pageList, PuzzleRankVO.class);
+        return success(puzzleRankVOPageList);
     }
 }
