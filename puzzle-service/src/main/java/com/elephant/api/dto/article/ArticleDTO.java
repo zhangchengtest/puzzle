@@ -37,4 +37,6 @@ public class ArticleDTO implements Serializable {
     @ApiModelProperty("页大小")
     private Integer pageSize;
 
+    private String userId;
+
 }

@@ -11,6 +11,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * 互动应用-Client
  *
@@ -52,6 +56,25 @@ public class UserClient extends BaseClient {
         result.setAvatar(data.getAvatar());
 
         return result;
+    }
+    public List<UserAuth> loadUserByIds(@SpringQueryMap UserDTO dto){
+        List<UserAuthVO> userAuthVOS = super.getDataWithException(userApi.loadUserByIds(dto));
+        List<UserAuth> list = userAuthVOS.stream().map(data -> {
+            UserAuth result = new UserAuth();
+            result.setId(data.getUserId());
+            result.setUsername(data.getUserName());
+            result.setNickname(data.getUserName());
+            result.setPwd(data.getPwd());
+            result.setEmail(data.getEmail());
+            result.setIsLock(data.getIsLock());
+            result.setRoleCode(data.getRoleCode());
+            result.setRoleName("admin");
+            result.setAvatar(data.getAvatar());
+            return result;
+        }).collect(Collectors.toList());
+
+
+        return list;
     }
 
 }

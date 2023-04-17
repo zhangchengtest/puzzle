@@ -1,17 +1,24 @@
 package com.elephant.controller;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.cunw.boot.service.IBeanMappingService;
 import com.cunw.framework.vo.PageList;
 import com.cunw.tid.SnowIdGenerator;
 import com.elephant.api.api.article.ArticleApi;
 import com.elephant.api.dto.article.ArticleDTO;
+import com.elephant.api.vo.article.ArticleBatchVO;
 import com.elephant.api.vo.article.ArticleVO;
+import com.elephant.api.vo.user.UserAuth;
+import com.elephant.client.UserClient;
+import com.elephant.client.dto.UserDTO;
 import com.elephant.common.model.article.Article;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.cunw.framework.constant.MarkConstants;
 import com.elephant.article.service.ArticleService;
@@ -21,6 +28,7 @@ import com.cunw.boot.controller.BaseController;
 import com.cunw.framework.vo.ResultVO;
 import com.cunw.framework.utils.base.StringUtils;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +49,8 @@ public class ArticleController extends BaseController implements ArticleApi {
     private final ArticleHelperService articleHelperService;
     private final ArticleBizService articleBizService;
     private final IBeanMappingService mappingService;
+
+    private final UserClient userClient;
 
     private final SnowIdGenerator idGenerator;
 
@@ -63,6 +73,7 @@ public class ArticleController extends BaseController implements ArticleApi {
 
         lambdaQuery.eq(Article::getCategory, articleDTO.getCategory());
         lambdaQuery.eq(Article::getTitle, articleDTO.getTitle());
+        lambdaQuery.eq(Article::getCreateUserCode, articleDTO.getUserId());
 
         // 查找数据库中已存在文章
         Article old = articleService.getOne(lambdaQuery);
@@ -83,6 +94,7 @@ public class ArticleController extends BaseController implements ArticleApi {
             newArticle.setContent(content);
             newArticle.setReadCount(0);
             newArticle.setCategory(category);
+            newArticle.setCreateUserCode(articleDTO.getUserId());
             articleService.add(newArticle);
         }
 
@@ -99,6 +111,7 @@ public class ArticleController extends BaseController implements ArticleApi {
 
         lambdaQuery.eq(Article::getCategory, articleDTO.getCategory());
         lambdaQuery.eq(Article::getTitle, articleDTO.getTitle());
+        lambdaQuery.eq(Article::getCreateUserCode, articleDTO.getUserId());
 
         // 查找数据库中已存在文章
         Article old = articleService.getOne(lambdaQuery);
@@ -183,5 +196,94 @@ public class ArticleController extends BaseController implements ArticleApi {
 
         PageList<ArticleVO> articleVOPageList = mappingService.mapping(pageList, ArticleVO.class);
         return success(articleVOPageList);
+    }
+
+    @GetMapping(value = "/list")
+    @ApiOperation(value = "查询分页列表", notes = "根据条件查询分页列表")
+    public ResultVO<List<ArticleBatchVO>> list(@SpringQueryMap final ArticleDTO dto) {
+
+        LambdaQueryWrapper<Article> lambdaQuery = new LambdaQueryWrapper<>();
+
+        lambdaQuery.eq(Article::getCategory, dto.getCategory());
+        lambdaQuery.orderByDesc(Article::getCreateDate);
+
+        PageList<Article> pageList = articleService.queryForPage( dto.getPageNum(), dto.getPageSize(), lambdaQuery);
+
+        PageList<ArticleVO> articleVOPageList = mappingService.mapping(pageList, ArticleVO.class);
+        List<ArticleVO> articleVOList = articleVOPageList.getList();
+
+        List<String> userCodes = articleVOList.stream().map(e -> e.getCreateUserCode()).collect(Collectors.toList());
+
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUserIds(listToString(userCodes));
+        List<UserAuth> userAuths = userClient.loadUserByIds(userDTO);
+        Map<String, UserAuth> userAuthMap = userAuths.stream().collect(Collectors.toMap(UserAuth::getId, Function.identity()));
+
+
+        String end = articleVOList.get(0).getTitle();
+        String start = articleVOList.get(articleVOList.size()-1).getTitle();
+
+        List<String> days = getDaysBetweenDesc(parseDate(start), parseDate(end));
+
+        List<ArticleBatchVO> result = days.stream().map(e -> {
+
+            ArticleBatchVO articleBatchVO = new ArticleBatchVO();
+            articleBatchVO.setTitle(e);
+
+            List<ArticleVO> articleVOList1 = articleVOList.stream().filter(vo -> vo.getTitle().equals(e)).collect(Collectors.toList());
+
+            if(CollectionUtil.isNotEmpty(articleVOList1)){
+                articleVOList1.stream().forEach(articleVO -> {
+                    articleVO.setAvatar( userAuthMap.get(articleVO.getCreateUserCode()).getAvatar());
+                });
+            }else{
+                articleVOList1 = new ArrayList<>();
+                articleVOList1.add(new ArticleVO());
+            }
+            articleBatchVO.setArticles(articleVOList1);
+            return articleBatchVO;
+
+        }).collect(Collectors.toList());
+
+        return success(result);
+    }
+
+    public static String listToString(List<String> list) {
+        if (list == null || list.isEmpty()) {
+            return "";
+        }
+        StringBuilder result = new StringBuilder();
+        for (String str : list) {
+            result.append(str).append(",");
+        }
+        return result.deleteCharAt(result.length() - 1).toString();
+    }
+
+
+    public LocalDate parseDate(String dateString) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return LocalDate.parse(dateString, formatter);
+    }
+
+    public List<String> getDaysBetween(LocalDate startDate, LocalDate endDate) {
+        List<String> days = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate currentDate = startDate;
+        while (!currentDate.isAfter(endDate)) {
+            days.add(currentDate.format(formatter));
+            currentDate = currentDate.plusDays(1);
+        }
+        return days;
+    }
+
+    public List<String> getDaysBetweenDesc(LocalDate startDate, LocalDate endDate) {
+        List<String> days = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate currentDate = endDate;
+        while (!currentDate.isBefore(startDate)) {
+            days.add(currentDate.format(formatter));
+            currentDate = currentDate.minusDays(1);
+        }
+        return days;
     }
 }

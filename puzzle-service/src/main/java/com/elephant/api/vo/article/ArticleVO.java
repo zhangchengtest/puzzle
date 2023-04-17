@@ -60,4 +60,6 @@ public class ArticleVO implements Serializable {
     @ApiModelProperty("修改时间")
     private Date updateDate;
 
+    private String avatar;
+
 }

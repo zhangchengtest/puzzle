@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 @FeignClient(name = "feignTest", url = "https://api.punengshuo.com/api/auth")
 public interface UserApi {
 
@@ -17,4 +19,8 @@ public interface UserApi {
 
     @GetMapping({"/loadUserById"})
     ResultVO<UserAuthVO> loadUserById(@SpringQueryMap UserDTO dto);
+
+
+    @GetMapping({"/loadUserByIds"})
+    ResultVO<List<UserAuthVO>> loadUserByIds(@SpringQueryMap UserDTO dto);
 }
