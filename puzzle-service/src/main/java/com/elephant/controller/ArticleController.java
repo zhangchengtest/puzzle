@@ -107,7 +107,22 @@ public class ArticleController extends BaseController implements ArticleApi {
 
         String title = articleDTO.getTitle();
         String category = articleDTO.getCategory();
+
         LambdaQueryWrapper<Article> lambdaQuery = new LambdaQueryWrapper<>();
+        if(title.equals("分类")){
+
+            lambdaQuery.select(Article::getCategory).groupBy(Article::getCategory);
+            List<Article> arr = articleService.queryList(lambdaQuery);
+
+            Article old = new Article();
+            String content = "";
+            for(int i=0; i<arr.size(); i++){
+                Article data = arr.get(i);
+                content += (i+1) + " " + data.getCategory() + "\n";
+                old.setContent(content);
+            }
+            return success(old);
+        }
 
         lambdaQuery.eq(Article::getCategory, articleDTO.getCategory());
         lambdaQuery.eq(Article::getTitle, articleDTO.getTitle());
@@ -238,7 +253,9 @@ public class ArticleController extends BaseController implements ArticleApi {
                 });
             }else{
                 articleVOList1 = new ArrayList<>();
-                articleVOList1.add(new ArticleVO());
+                ArticleVO articleVO = new ArticleVO();
+                articleVO.setTitle(e);
+                articleVOList1.add(articleVO);
             }
             articleBatchVO.setArticles(articleVOList1);
             return articleBatchVO;
