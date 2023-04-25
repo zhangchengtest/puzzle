@@ -123,31 +123,15 @@ public class ArticleController extends BaseController implements ArticleApi {
             }
             return success(old);
         }
-
+        final String lastSql = "limit 1";
         lambdaQuery.eq(Article::getCategory, articleDTO.getCategory());
-        lambdaQuery.eq(Article::getTitle, articleDTO.getTitle());
         lambdaQuery.eq(Article::getCreateUserCode, articleDTO.getUserId());
+        lambdaQuery.orderByDesc(Article::getCreateDate);
+        lambdaQuery.last(lastSql);
 
         // 查找数据库中已存在文章
         Article old = articleService.getOne(lambdaQuery);
 
-        if (old == null) {
-            LocalDate date = LocalDate.parse(title);
-            date = date.minusDays(1);
-            String previousTitle = date.toString();
-
-            lambdaQuery = new LambdaQueryWrapper<>();
-
-            lambdaQuery.eq(Article::getCategory, articleDTO.getCategory());
-            lambdaQuery.eq(Article::getTitle, previousTitle);
-
-            old = articleService.getOne(lambdaQuery);
-
-            if (old == null) {
-                String message = "Article not found with title " + title + " and category " + category;
-                return success(old);
-            }
-        }
 
         if (category.equals("行程")) {
             String[] arr = old.getContent().split("\n");

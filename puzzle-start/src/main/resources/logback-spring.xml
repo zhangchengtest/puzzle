@@ -3,7 +3,7 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <springProperty source="spring.application.name" name="appName" scope="context"/>
     <springProperty source="spring.profiles.active" name="profileName" scope="context"/>
-    <property name="LOG_HOME" value="/opt/applogs"/>
+    <property name="LOG_HOME" value="/opt/resources/applogs"/>
     <property name="CONSOLE_LOG_PATTERN"
               value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [${appName:-}] [${profileName:-default}] [%level] [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{X-B3-ParentSpanId:-},%X{X-Span-Export:-}] [${PID:- }] [%15.15t] [%class:%M:%line] %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
     <!-- 控制台打印日志的相关配置 -->
