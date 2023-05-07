@@ -95,6 +95,7 @@ public class PuzzleRankController extends BaseController implements PuzzleRankAp
         LambdaQueryWrapper<PuzzleRank> lambdaQuery = new LambdaQueryWrapper<>();
 
         lambdaQuery.eq(PuzzleRank::getUrl, dto.getUrl());
+        lambdaQuery.orderByAsc(PuzzleRank::getSpendTime, PuzzleRank::getStep);
 
 
         PageList<PuzzleRank> pageList = puzzleRankService.queryForPage( dto.getPageNum(), dto.getPageSize(), lambdaQuery);

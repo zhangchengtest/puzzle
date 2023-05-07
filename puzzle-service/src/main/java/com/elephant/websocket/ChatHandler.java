@@ -100,6 +100,23 @@ public class ChatHandler extends TextWebSocketHandler {
                 roomChatService.add(roomChat);
 
                 SendMessage(roomId, content, user, session, false, roomChat);
+            } else if ("send".equals(action)) {
+                String roomId = json.getString("roomId");
+                String userId = json.getString("userId");
+                String content = json.getString("content");
+
+                User user = new User(userId,userId);
+
+                RoomChat roomChat = new RoomChat();
+                roomChat.setId(idGenerator.getNextStr());
+                roomChat.setRoomId(roomId);
+                roomChat.setUserId(user.getUserId());
+                roomChat.setContent(content);
+                roomChat.setSendDate(new Date());
+
+                roomChatService.add(roomChat);
+
+                SendMessage(roomId, content, user, session, false, roomChat);
             } else {
                 LOGGER.error("Unknown action - {}", action);
             }
