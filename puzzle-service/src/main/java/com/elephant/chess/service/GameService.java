@@ -4,6 +4,7 @@ import com.elephant.chess.Chessboard;
 import com.elephant.chess.Piece;
 import com.elephant.chess.Position;
 import com.elephant.chess.SideEnum;
+import com.elephant.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ public class GameService {
         currentSideEnum = (currentSideEnum == SideEnum.RED) ? SideEnum.BLACK : SideEnum.RED;
         saveCurrentSideEnumToRedis(roomId, currentSideEnum);
         saveChessboardToRedis(roomId, chessboard);
+        saveCurrentPositionToRedis(roomId, dest);
         return true;
     }
 
@@ -87,6 +89,20 @@ public class GameService {
         } else {
             return SideEnum.valueOf(currentSideEnumStr);
         }
+    }
+
+    public Position readCurrentPositionFromRedis(String roomId) {
+        String postionStr = redisTemplate.opsForValue().get("room:" + roomId + ":currentPosition");
+        if (postionStr == null) {
+            return null;
+        } else {
+            return (Position)ObjectUtils.getObjectFromJsonString(postionStr, Position.class);
+        }
+    }
+
+    public void saveCurrentPositionToRedis(String roomId, Position position) {
+        String str = ObjectUtils.getJsonStringFromObject(position);
+        redisTemplate.opsForValue().set("room:" + roomId + ":currentPosition", str);
     }
 
     public void saveChessboardToRedis(String roomId, Chessboard chessboard) {

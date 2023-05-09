@@ -64,8 +64,9 @@ public class ChessHandler extends TextWebSocketHandler {
 
                         Chessboard chessboard = gameService.getChessboard(joinRoomId);
                         SideEnum sideEnum = gameService.getCurrentSideEnum(joinRoomId);
+                        Position position = gameService.readCurrentPositionFromRedis(joinRoomId);
                         // 向所有客户端广播新的棋盘状态
-                        broadcastChessboardState(joinRoomId, chessboard, sideEnum.getType());
+                        broadcastChessboardState(joinRoomId, chessboard, sideEnum.getType(), position);
                     } else {
                         // 发送房间不存在消息
                         JSONObject jsonRoomNotFound = new JSONObject();
@@ -102,7 +103,7 @@ public class ChessHandler extends TextWebSocketHandler {
                     SideEnum sideEnum = gameService.getCurrentSideEnum(room);
                     if(chessboard != null){
                         // 向所有客户端广播新的棋盘状态
-                        broadcastChessboardState(room, chessboard, sideEnum.getType());
+                        broadcastChessboardState(room, chessboard, sideEnum.getType(), end);
 
                     }else{
                         log.info("boardNotFound");
@@ -134,16 +135,21 @@ public class ChessHandler extends TextWebSocketHandler {
         Chessboard chessboard = gameService.getChessboard(joinRoomId);
         SideEnum sideEnum = gameService.getCurrentSideEnum(joinRoomId);
         // 向所有客户端广播新的棋盘状态
-        broadcastChessboardState(joinRoomId, chessboard, sideEnum.getType());
+        broadcastChessboardState(joinRoomId, chessboard, sideEnum.getType(), null);
     }
 
-    private void broadcastChessboardState(String room, Chessboard chessboard, String side) {
+    private void broadcastChessboardState(String room, Chessboard chessboard, String side, Position end) {
         try {
             // 构造WebSocket消息
             JSONObject jsonMessage = new JSONObject();
             jsonMessage.put("type", "chessboardState");
             jsonMessage.put("chessboard", chessboard.toJSON());
             jsonMessage.put("side", side);
+            if(end != null){
+                jsonMessage.put("lastRow", end.getRow());
+                jsonMessage.put("lastCol", end.getCol());
+            }
+
             log.info("chessboard.toJSON()");
             log.info(chessboard.toJSON());
             // 向房间内所有客户端广播消息
