@@ -120,4 +120,8 @@ public class GameService {
     private void saveCurrentSideEnumToRedis(String roomId, SideEnum currentSideEnum) {
         redisTemplate.opsForValue().set("room:" + roomId + ":currentSideEnum", currentSideEnum.toString());
     }
+
+    public void clearCurrentPositionToRedis(String roomId) {
+        redisTemplate.delete("room:" + roomId + ":currentPosition");
+    }
 }

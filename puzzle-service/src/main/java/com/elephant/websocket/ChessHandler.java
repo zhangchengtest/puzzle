@@ -4,6 +4,7 @@ import com.elephant.chess.Chessboard;
 import com.elephant.chess.Position;
 import com.elephant.chess.SideEnum;
 import com.elephant.chess.service.GameService;
+import com.elephant.utils.ObjectUtils;
 import com.elephant.websocket.dto.ChatRoom;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
@@ -132,6 +133,8 @@ public class ChessHandler extends TextWebSocketHandler {
 
         gameService.clearChessboardToRedis(joinRoomId);
         gameService.clearCurrentSideEnumToRedis(joinRoomId);
+        gameService.clearCurrentPositionToRedis(joinRoomId);
+
         Chessboard chessboard = gameService.getChessboard(joinRoomId);
         SideEnum sideEnum = gameService.getCurrentSideEnum(joinRoomId);
         // 向所有客户端广播新的棋盘状态
@@ -152,6 +155,7 @@ public class ChessHandler extends TextWebSocketHandler {
 
             log.info("chessboard.toJSON()");
             log.info(chessboard.toJSON());
+            log.info("Position end [{}]", ObjectUtils.getJsonStringFromObject(end));
             // 向房间内所有客户端广播消息
             Set<WebSocketSession> players = rooms.get(room);
             if (players != null) {
