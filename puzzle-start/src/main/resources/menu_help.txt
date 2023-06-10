@@ -1,0 +1,14 @@
+SELECT * FROM sys_permission_group WHERE create_user_code = 'cheng'
+
+SELECT * FROM sys_permission_group_link_permission WHERE permission_group_id IN (
+SELECT id FROM sys_permission_group WHERE create_user_code = 'cheng')
+
+SELECT * FROM sys_role_bind_permission_group WHERE create_user_code = 'cheng'
+
+
+delete FROM sys_permission_group WHERE create_user_code = 'cheng';
+
+delete FROM sys_permission_group_link_permission WHERE permission_group_id IN (
+SELECT id FROM sys_permission_group WHERE create_user_code = 'cheng');
+
+delete FROM sys_role_bind_permission_group WHERE create_user_code = 'cheng';

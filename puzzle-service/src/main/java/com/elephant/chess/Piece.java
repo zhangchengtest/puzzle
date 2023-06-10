@@ -13,6 +13,10 @@ public class Piece {
 
     private String color;
 
+    private Integer row;
+
+    private Integer col;
+
     public Piece(PieceTypeEnum type) {
         this.type = type.getType();
         this.color = type.getColor();

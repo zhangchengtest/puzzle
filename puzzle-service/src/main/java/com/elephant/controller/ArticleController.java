@@ -18,6 +18,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.cunw.framework.constant.MarkConstants;
@@ -60,6 +62,50 @@ public class ArticleController extends BaseController implements ArticleApi {
          return success(true);
     }
 
+//    @GetMapping(value = "/test")
+//    public ResultVO<String> random(){
+//
+//        LambdaQueryWrapper<Article> lambdaQuery = new LambdaQueryWrapper<>();
+//
+//        // 查找数据库中已存在文章
+//        List<Article> list = articleService.queryList(lambdaQuery);
+//        list.stream().forEach(e -> {
+//            e.setContent( urlAndImageToMarkdown(e.getContent()));
+//        });
+//
+//        articleService.batchModify(list);
+//
+//        return success();
+//    }
+
+    public static void main(String[] args) {
+        String ss = "你好 https://baidu.com/  https://baidu.com/sss.png";
+        System.out.println(urlAndImageToMarkdown(ss));
+    }
+
+
+    public static String urlAndImageToMarkdown(String text) {
+        String pattern = "\\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]";
+
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(text);
+
+        StringBuffer sb = new StringBuffer();
+        while(matcher.find()) {
+            String url = matcher.group();
+            String link = "";
+            if (url.endsWith(".jpg") || url.endsWith(".png")) {
+                link = "![" + url.substring(url.lastIndexOf('/') + 1) + "](" + url + ")";
+            } else {
+                link = "[" + url + "](" + url + ")";
+            }
+            matcher.appendReplacement(sb, link);
+        }
+
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
 
     @PostMapping("/add")
     public ResultVO<Boolean> addArticle(@RequestBody ArticleDTO articleDTO) {
@@ -67,6 +113,7 @@ public class ArticleController extends BaseController implements ArticleApi {
         int chapter = articleDTO.getChapter();
         String title = articleDTO.getTitle();
         String content = articleDTO.getContent();
+        content = urlAndImageToMarkdown(content);
         String category = articleDTO.getCategory();
 
         LambdaQueryWrapper<Article> lambdaQuery = new LambdaQueryWrapper<>();
