@@ -27,4 +27,6 @@ public class ClockEventDTO implements Serializable {
     @ApiModelProperty("状态（0：停用，1：启用）")
     private Integer status;
 
+    private String userId;
+
 }
