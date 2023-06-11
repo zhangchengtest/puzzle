@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -38,7 +40,25 @@ public class UploadController extends BaseController {
         if (!parentDir.exists()) {
             parentDir.mkdirs();
         }
-        file.transferTo(dest);
+
+        // 获取图像的高度和宽度
+        BufferedImage image = ImageIO.read(file.getInputStream());
+        int height = image.getHeight();
+        int width = image.getWidth();
+
+        // 如果图像超过指定大小，压缩它
+        if (width > 800 || height > 800) {
+            int newWidth = width / 2;
+            int newHeight = height / 2;
+            BufferedImage resized = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+            resized.createGraphics().drawImage(image, 0, 0, newWidth, newHeight, null);
+
+            ImageIO.write(resized, fileType.substring(1, fileType.length()), dest);
+        } else {
+            // 如果没有超过指定大小，直接保存原始图像
+            ImageIO.write(image,  fileType.substring(1, fileType.length()), dest);
+        }
+
         String url = domainSt + dateDir + "/" + fileName+fileType;
         return success(url);
     }
