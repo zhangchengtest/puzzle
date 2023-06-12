@@ -123,6 +123,42 @@ public class ClockController extends BaseController  {
         return false;
     }
 
+    //    @Override
+//    public ResultVO<Boolean> add(final ClockDTO dto){
+//         clockBizService.add(dto);
+//         return success(true);
+//    }
+
+    @PostMapping(value = "/add")
+    public ResultVO<Boolean> add(final @RequestBody ClockDTO dto){
+        UserAuth user = AuthUtil.getUserAuth();
+        if(user != null){
+            dto.setUserId(user.getId());
+        }
+        Clock po = mappingService.mapping(dto, Clock.class);
+        po.setCreateUserCode(dto.getUserId());
+        clockService.add(po);
+        return success(true);
+    }
+
+    @PostMapping(value = "/delete")
+    public ResultVO<Boolean> delete(final @RequestBody ClockDTO dto){
+        UserAuth user = AuthUtil.getUserAuth();
+
+        LambdaQueryWrapper<Clock> lambdaQuery = new LambdaQueryWrapper<>();
+
+        lambdaQuery.ge(Clock::getEventDescription, dto.getEventDescription());
+        lambdaQuery.eq(Clock::getCreateUserCode, user.getId());
+        lambdaQuery.orderByDesc(Clock::getCreateDate);
+
+        List<Clock> clockEvents = clockService.queryList(lambdaQuery);
+        if(CollectionUtils.isNotEmpty(clockEvents)){
+            clockService.delete(clockEvents.get(0).getId());
+        }
+
+        return success(true);
+    }
+
     @PostMapping(value = "/finish")
     public ResultVO<Boolean> add(final @RequestBody ClockEventDTO dto){
         UserAuth user = AuthUtil.getUserAuth();
