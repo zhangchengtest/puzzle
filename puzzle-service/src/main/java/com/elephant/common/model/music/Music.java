@@ -19,7 +19,7 @@ public class Music implements IBasePO<String> {
     @TableId("music_id")
     private String id;
     private String musicName;
-    private Integer albumId;
+    private String albumId;
     /**
      * 状态：1-启用 0-停用 -1-删除
      */

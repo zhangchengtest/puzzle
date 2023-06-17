@@ -18,7 +18,7 @@ import java.util.Date;
 public class Album implements IBasePO<String> {
     @TableId("album_id")
     private String id;
-    private Long artistId;
+    private String artistId;
     private String title;
     private String img;
     /**

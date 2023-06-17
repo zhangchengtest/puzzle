@@ -1,7 +1,11 @@
 package com.elephant.utils;
 
+import org.apache.commons.lang.time.DateUtils;
+
 import java.time.*;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class EventHelper {
@@ -44,11 +48,73 @@ public class EventHelper {
     }
 
 
+    public static Date subtractSecondsFromDate(Date currentDate, long seconds, int days) {
+        // 将Date转换为时间戳，并减去指定的秒数
+        long currentTimeInMillis = currentDate.getTime();
+        long newTimeInMillis = currentTimeInMillis - (seconds * 1000L); //Remeber to convert to millis
+
+        // 使用新的时间戳创建新的Date对象
+        Date newDate = new Date();
+        newDate.setTime(newTimeInMillis);
+
+
+        // 假设需要去掉时间部分的日期为date
+
+//Date -> LocalDate
+        LocalDate localDate = newDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+//去掉时间部分
+        LocalDateTime dateWithoutTime = localDate.atStartOfDay();
+
+//LocalDate -> Date
+        Date finalDate =  Date.from(dateWithoutTime.atZone(ZoneId.systemDefault()).toInstant());
+        if(days > 0){
+             finalDate = DateUtils.addDays(finalDate, days);
+        }
+
+        return finalDate;
+    }
+
 
     public static void main(String[] args) {
-        long seconds = calculateDeadline(4, 5);
+        int day = 5;
+        long seconds = calculateDeadline(4, day);
         String r = formatSeconds(seconds);
-       System.out.println(r);
+        Date ss = getWeek(day);
+
+        System.out.println(ss);
     }
+
+
+    public static Date getLastWeek(Date currentDate) {
+
+
+        //Date -> LocalDate
+        LocalDate localDate = currentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+//去掉时间部分
+        LocalDateTime dateWithoutTime = localDate.atStartOfDay();
+
+//LocalDate -> Date
+        Date finalDate =  Date.from(dateWithoutTime.atZone(ZoneId.systemDefault()).toInstant());
+        currentDate = DateUtils.addDays(finalDate, -6);
+
+        return currentDate;
+    }
+
+
+    public static Date getWeek(int week) {
+        week = week + 1;
+        if(week > 7){
+            week = week -1;
+        }
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_WEEK, week);
+        Date startDate = getLastWeek(cal.getTime());
+
+        return startDate;
+    }
+
 
 }

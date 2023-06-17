@@ -18,40 +18,13 @@ import java.util.Date;
 @ApiModel(description="-VO")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MusicVO implements Serializable {
-    private Integer musicId;
+    private String id;
 
     private String musicName;
 
-    private Integer albumId;
+    private String albumName;
 
-    /**
-     * 状态：1-启用 0-停用 -1-删除
-     */
-    @ApiModelProperty("状态：1-启用 0-停用 -1-删除")
-    private Integer status;
+    private String artistName;
 
-    /**
-     * 创建人
-     */
-    @ApiModelProperty("创建人")
-    private String createUserCode;
-
-    /**
-     * 创建时间
-     */
-    @ApiModelProperty("创建时间")
-    private Date createDate;
-
-    /**
-     * 修改人
-     */
-    @ApiModelProperty("修改人")
-    private String updateUserCode;
-
-    /**
-     * 修改时间
-     */
-    @ApiModelProperty("修改时间")
-    private Date updateDate;
 
 }

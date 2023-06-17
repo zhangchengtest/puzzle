@@ -5,25 +5,22 @@ import com.cunw.boot.service.IBeanMappingService;
 import com.cunw.framework.vo.PageList;
 import com.elephant.api.api.music.MusicApi;
 import com.elephant.api.dto.music.MusicDTO;
-import com.elephant.api.dto.puzzle.PuzzleRankDTO;
 import com.elephant.api.vo.music.MusicVO;
-import com.elephant.api.vo.puzzle.PuzzleRankVO;
 import com.elephant.common.model.music.Album;
 import com.elephant.common.model.music.Artist;
 import com.elephant.common.model.music.Music;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.cunw.framework.constant.MarkConstants;
-import com.elephant.common.model.puzzle.PuzzleRank;
 import com.elephant.common.model.score.Score;
 import com.elephant.music.service.*;
 import com.cunw.boot.controller.BaseController;
 import com.cunw.framework.vo.ResultVO;
 import com.cunw.framework.utils.base.StringUtils;
+import com.elephant.utils.ConvertUtils;
 import com.elephant.utils.ObjectUtils;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.SpringQueryMap;
@@ -51,6 +48,52 @@ public class MusicController extends BaseController implements MusicApi {
     public ResultVO<Boolean> add(final MusicDTO dto){
          musicBizService.add(dto);
          return success(true);
+    }
+
+    @GetMapping(value = "/page")
+    @ApiOperation(value = "查询分页列表", notes = "根据条件查询分页列表")
+    public ResultVO<PageList<MusicVO>> page(@SpringQueryMap final MusicDTO dto) {
+
+        LambdaQueryWrapper<Music> lambdaQuery = new LambdaQueryWrapper<>();
+
+        PageList<Music> pageList = musicService.queryForPage( dto.getPageNum(), dto.getPageSize(), lambdaQuery);
+
+        List<String> albumIds = pageList.getList().stream().map(Music::getAlbumId).collect(Collectors.toList());
+        List<Album>  albumList = getAlbs(albumIds);
+        Map<String, Album> albumMap =  albumList.stream().collect(Collectors.toMap(Album::getId, Function.identity()));
+        List<String> artistIds = albumList.stream().map(Album::getArtistId).collect(Collectors.toList());
+        Map<String, Artist> artistMap = getArtists(artistIds);
+        List<Object> objects = new ArrayList<>();
+        objects.add(albumMap);
+        objects.add(artistMap);
+        PageList<MusicVO> musicVOPageList = ConvertUtils.mapping(pageList, this::convert, objects);
+
+        return success(musicVOPageList);
+    }
+
+    private MusicVO convert(Music music, List<Object> objects){
+        MusicVO musicVO = mappingService.mapping(music, MusicVO.class);
+        Map<String, Album> albumMap = (Map<String, Album>)objects.get(0);
+        Map<String, Artist> artistMap =  (Map<String, Artist>)objects.get(1);
+        musicVO.setAlbumName(albumMap.get(music.getAlbumId()).getTitle());
+        musicVO.setArtistName(artistMap.get(albumMap.get(music.getAlbumId()).getArtistId()).getArtistName());
+        return musicVO;
+    }
+
+    private List<Album> getAlbs( List<String> albumIds){
+        LambdaQueryWrapper<Album> lambdaQuery = new LambdaQueryWrapper<>();
+        lambdaQuery.in(Album::getId, albumIds);
+        List<Album>  albumList = albumService.queryList(lambdaQuery);
+
+        return albumList;
+    }
+
+    private Map<String, Artist> getArtists( List<String> ids){
+        LambdaQueryWrapper<Artist> lambdaQuery = new LambdaQueryWrapper<>();
+        lambdaQuery.in(Artist::getId, ids);
+        List<Artist>  albumList = artistService.queryList(lambdaQuery);
+        Map<String, Artist> albumMap =  albumList.stream().collect(Collectors.toMap(Artist::getId, Function.identity()));
+        return albumMap;
     }
 
     @GetMapping(value = "/random")

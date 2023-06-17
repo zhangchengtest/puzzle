@@ -78,7 +78,7 @@ public class ClockController extends BaseController  {
                 e.setSeconds(EventHelper.calculateDeadline(e.getEventType(), NumberUtils.toInt(e.getNotifyDate())));
             }
             e.setDeadLine(EventHelper.formatSeconds(e.getSeconds()));
-            if(getEvent(e.getId(), e.getEventType(), dto.getUserId())){
+            if(getEvent(e.getId(), e.getEventType(), dto.getUserId(), NumberUtils.toInt(e.getNotifyDate()))){
                 e.setFinishStatus(1);
                 e.setDeadLine("已完成");
             }else {
@@ -98,17 +98,20 @@ public class ClockController extends BaseController  {
         return success(puzzleRankVOPageList);
     }
 
-    public boolean getEvent(String clockId, Integer eventType, String userId){
-
-        // 获取今天日期
-        LocalDate today = LocalDate.now();
+    public boolean getEvent(String clockId, Integer eventType, String userId, int day){
+        Date startDate = null;
+        if(eventType == 1){
+            // 获取今天日期
+            LocalDate today = LocalDate.now();
 
 // 获取今天起始时间（00:00:00）
-        LocalDateTime todayStart = today.atStartOfDay();
+            LocalDateTime todayStart = today.atStartOfDay();
 
 // 将LocalDateTime类型转换为Date类型
-        Date startDate = Date.from(todayStart.atZone(ZoneId.systemDefault()).toInstant());
-
+           startDate = Date.from(todayStart.atZone(ZoneId.systemDefault()).toInstant());
+        }else if(eventType == 4){
+            startDate = EventHelper.getWeek(day);
+        }
 
         LambdaQueryWrapper<ClockEvent> lambdaQuery = new LambdaQueryWrapper<>();
 
