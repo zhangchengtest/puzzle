@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.elephant.calendar.mapper.CalendarMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.elephant.common.model.calendar.Calendar">
+        <id column="id" property="id" />
+        <result column="event_type" property="eventType" />
+        <result column="event_description" property="eventDescription" />
+        <result column="notify_date" property="notifyDate" />
+        <result column="lunar_flag" property="lunarFlag" />
+        <result column="remark" property="remark" />
+        <result column="status" property="status" />
+        <result column="create_user_code" property="createUserCode" />
+        <result column="create_date" property="createDate" />
+        <result column="update_user_code" property="updateUserCode" />
+        <result column="update_date" property="updateDate" />
+    </resultMap>
+</mapper>

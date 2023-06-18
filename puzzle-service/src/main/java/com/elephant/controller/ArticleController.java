@@ -10,6 +10,7 @@ import com.elephant.api.dto.article.ArticleDTO;
 import com.elephant.api.vo.article.ArticleBatchVO;
 import com.elephant.api.vo.article.ArticleVO;
 import com.elephant.api.vo.user.UserAuth;
+import com.elephant.calendar.service.CalendarService;
 import com.elephant.client.UserClient;
 import com.elephant.client.dto.UserDTO;
 import com.elephant.common.model.article.Article;
@@ -29,7 +30,9 @@ import com.elephant.article.service.ArticleHelperService;
 import com.cunw.boot.controller.BaseController;
 import com.cunw.framework.vo.ResultVO;
 import com.cunw.framework.utils.base.StringUtils;
+import com.elephant.common.model.calendar.Calendar;
 import io.swagger.annotations.ApiOperation;
+import org.apache.http.client.utils.DateUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.http.HttpStatus;
@@ -56,27 +59,42 @@ public class ArticleController extends BaseController implements ArticleApi {
 
     private final SnowIdGenerator idGenerator;
 
+    private final CalendarService calendarService;
+
     @Override
     public ResultVO<Boolean> add(final ArticleDTO dto){
          articleBizService.add(dto);
          return success(true);
     }
 
-//    @GetMapping(value = "/test")
-//    public ResultVO<String> random(){
-//
-//        LambdaQueryWrapper<Article> lambdaQuery = new LambdaQueryWrapper<>();
-//
-//        // 查找数据库中已存在文章
-//        List<Article> list = articleService.queryList(lambdaQuery);
-//        list.stream().forEach(e -> {
-//            e.setContent( urlAndImageToMarkdown(e.getContent()));
-//        });
-//
-//        articleService.batchModify(list);
-//
-//        return success();
-//    }
+    @GetMapping(value = "/test")
+    public ResultVO<String> random(){
+
+        LambdaQueryWrapper<Calendar> lambdaQuery = new LambdaQueryWrapper<>();
+
+        // 查找数据库中已存在文章
+        List<Calendar> list = calendarService.queryList(lambdaQuery);
+
+        list.stream().forEach(e -> {
+            Article article = new Article();
+            if(StringUtils.isNotEmpty(e.getRemark())){
+                article.setContent(e.getEventDescription() + "\n"+e.getRemark());
+            }else {
+                article.setContent(e.getEventDescription() );
+            }
+
+            article.setTitle(DateUtils.formatDate(e.getNotifyDate(), "yyyy-MM-dd"));
+            article.setCategory("大事件");
+            article.setChapter(1);
+            article.setCreateUserCode("1");
+            article.setUpdateUserCode("mytest");
+            article.setReadCount(0);
+            article.setCreateDate(e.getNotifyDate());
+            articleService.add(article);
+        });
+
+        return success();
+    }
 
     public static void main(String[] args) {
         String ss = "你好 https://baidu.com/  https://baidu.com/sss.png";
@@ -271,27 +289,65 @@ public class ArticleController extends BaseController implements ArticleApi {
 
         List<String> days = getDaysBetweenDesc(parseDate(start), parseDate(end));
 
-        List<ArticleBatchVO> result = days.stream().map(e -> {
 
-            ArticleBatchVO articleBatchVO = new ArticleBatchVO();
-            articleBatchVO.setTitle(e);
+//        List<ArticleVO> articleVOList1 = articleVOList.stream().filter(vo -> vo.getTitle().equals(e)).collect(Collectors.toList());
 
-            List<ArticleVO> articleVOList1 = articleVOList.stream().filter(vo -> vo.getTitle().equals(e)).collect(Collectors.toList());
+        Map<String,  List<ArticleVO>> mapALL =
+                articleVOList.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        ArticleVO::getTitle
+                                ));
 
-            if(CollectionUtil.isNotEmpty(articleVOList1)){
-                articleVOList1.stream().forEach(articleVO -> {
-                    articleVO.setAvatar( userAuthMap.get(articleVO.getCreateUserCode()).getAvatar());
-                });
-            }else{
-                articleVOList1 = new ArrayList<>();
-                ArticleVO articleVO = new ArticleVO();
-                articleVO.setTitle(e);
-                articleVOList1.add(articleVO);
-            }
-            articleBatchVO.setArticles(articleVOList1);
-            return articleBatchVO;
+        List<ArticleBatchVO> result = null;
+        if(days.size() > 365){
+            result = mapALL.keySet().stream().map(e -> {
 
-        }).collect(Collectors.toList());
+                ArticleBatchVO articleBatchVO = new ArticleBatchVO();
+                articleBatchVO.setTitle(e);
+
+                List<ArticleVO> articleVOList1 = mapALL.get(e);
+
+                if(CollectionUtil.isNotEmpty(articleVOList1)){
+                    articleVOList1.stream().forEach(articleVO -> {
+                        articleVO.setAvatar( userAuthMap.get(articleVO.getCreateUserCode()).getAvatar());
+                    });
+                }else{
+                    articleVOList1 = new ArrayList<>();
+                    ArticleVO articleVO = new ArticleVO();
+                    articleVO.setTitle(e);
+                    articleVOList1.add(articleVO);
+                }
+                articleBatchVO.setArticles(articleVOList1);
+                return articleBatchVO;
+
+            }).collect(Collectors.toList());
+
+        }else {
+
+           result = days.stream().map(e -> {
+
+                ArticleBatchVO articleBatchVO = new ArticleBatchVO();
+                articleBatchVO.setTitle(e);
+
+                List<ArticleVO> articleVOList1 = mapALL.get(e);
+
+                if(CollectionUtil.isNotEmpty(articleVOList1)){
+                    articleVOList1.stream().forEach(articleVO -> {
+                        articleVO.setAvatar( userAuthMap.get(articleVO.getCreateUserCode()).getAvatar());
+                    });
+                }else{
+                    articleVOList1 = new ArrayList<>();
+                    ArticleVO articleVO = new ArticleVO();
+                    articleVO.setTitle(e);
+                    articleVOList1.add(articleVO);
+                }
+                articleBatchVO.setArticles(articleVOList1);
+                return articleBatchVO;
+
+            }).collect(Collectors.toList());
+
+        }
 
         return success(result);
     }
