@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * -VO
@@ -20,11 +21,12 @@ import java.util.Date;
 public class MusicVO implements Serializable {
     private String id;
 
-    private String musicName;
+    private String name;
 
-    private String albumName;
+    private AlbumVO album;
 
-    private String artistName;
+    private List<ArtistVO> artists;
 
+    private Integer duration;
 
 }

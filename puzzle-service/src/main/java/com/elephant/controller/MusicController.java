@@ -5,9 +5,13 @@ import com.cunw.boot.service.IBeanMappingService;
 import com.cunw.framework.vo.PageList;
 import com.elephant.api.api.music.MusicApi;
 import com.elephant.api.dto.music.MusicDTO;
+import com.elephant.api.vo.music.AlbumVO;
+import com.elephant.api.vo.music.ArtistVO;
+import com.elephant.api.vo.music.LyricVO;
 import com.elephant.api.vo.music.MusicVO;
 import com.elephant.common.model.music.Album;
 import com.elephant.common.model.music.Artist;
+import com.elephant.common.model.music.Lyric;
 import com.elephant.common.model.music.Music;
 
 import java.util.*;
@@ -41,6 +45,8 @@ public class MusicController extends BaseController implements MusicApi {
     private final ArtistService artistService;
     private final AlbumService  albumService;
     private final MusicHelperService musicHelperService;
+
+    private final LyricService lyricService;
     private final MusicBizService musicBizService;
     private final IBeanMappingService mappingService;
 
@@ -71,13 +77,42 @@ public class MusicController extends BaseController implements MusicApi {
         return success(musicVOPageList);
     }
 
+    @GetMapping(value = "/lyric")
+    @ApiOperation(value = "查询分页列表", notes = "根据条件查询分页列表")
+    public ResultVO<LyricVO> lyric(@RequestParam final String id) {
+
+        if(StringUtils.isBlank(id)){
+            return failed();
+        }
+        final Lyric po = lyricService.getById(id);
+        final LyricVO vo = mappingService.mapping(po, LyricVO.class);
+        return success(vo);
+    }
+
     private MusicVO convert(Music music, List<Object> objects){
         MusicVO musicVO = mappingService.mapping(music, MusicVO.class);
+        musicVO.setName(music.getMusicName());
         Map<String, Album> albumMap = (Map<String, Album>)objects.get(0);
         Map<String, Artist> artistMap =  (Map<String, Artist>)objects.get(1);
-        musicVO.setAlbumName(albumMap.get(music.getAlbumId()).getTitle());
-        musicVO.setArtistName(artistMap.get(albumMap.get(music.getAlbumId()).getArtistId()).getArtistName());
+        musicVO.setAlbum(convertAlbum(albumMap.get(music.getAlbumId())));
+        musicVO.setArtists(convertArtist(artistMap.get(albumMap.get(music.getAlbumId()).getArtistId())));
         return musicVO;
+    }
+
+    public AlbumVO convertAlbum(Album album){
+        AlbumVO albumVO = new AlbumVO();
+        albumVO.setName(album.getTitle());
+        albumVO.setPicUrl(album.getImg());
+        return albumVO;
+    }
+
+    public List<ArtistVO> convertArtist(Artist artist){
+        List<ArtistVO> artistVOS = new ArrayList<>();
+        ArtistVO artistVO = new ArtistVO();
+        artistVO.setName(artist.getArtistName());
+        artistVOS.add(artistVO);
+
+        return artistVOS;
     }
 
     private List<Album> getAlbs( List<String> albumIds){

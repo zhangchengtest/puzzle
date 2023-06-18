@@ -20,6 +20,7 @@ public class Music implements IBasePO<String> {
     private String id;
     private String musicName;
     private String albumId;
+    private Integer duration;
     /**
      * 状态：1-启用 0-停用 -1-删除
      */
