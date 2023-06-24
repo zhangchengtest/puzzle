@@ -3,6 +3,7 @@ package com.elephant.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.cunw.boot.service.IBeanMappingService;
 import com.cunw.framework.vo.PageList;
+import com.cunw.tid.SnowIdGenerator;
 import com.elephant.api.api.music.MusicApi;
 import com.elephant.api.dto.music.MusicDTO;
 import com.elephant.api.vo.music.AlbumVO;
@@ -14,8 +15,13 @@ import com.elephant.common.model.music.Artist;
 import com.elephant.common.model.music.Lyric;
 import com.elephant.common.model.music.Music;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.cunw.framework.constant.MarkConstants;
@@ -27,9 +33,26 @@ import com.cunw.framework.utils.base.StringUtils;
 import com.elephant.utils.ConvertUtils;
 import com.elephant.utils.ObjectUtils;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.audio.exceptions.CannotReadException;
+import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
+import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.tag.FieldKey;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.TagException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
+
 /**
  * MusicController
  *
@@ -40,6 +63,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/musics")
+@Slf4j
 public class MusicController extends BaseController implements MusicApi {
     private final MusicService musicService;
     private final ArtistService artistService;
@@ -50,10 +74,99 @@ public class MusicController extends BaseController implements MusicApi {
     private final MusicBizService musicBizService;
     private final IBeanMappingService mappingService;
 
+    private final SnowIdGenerator idGenerator;
+
+    @Value("${mp3.upload.dir}")
+    private String mp3uploadDir;
+
     @Override
     public ResultVO<Boolean> add(final MusicDTO dto){
-         musicBizService.add(dto);
+
+//        Music music = new Music();
+//        music.setId();
+//        music.setMusicName();
+//        music.setAlbumId();
+//        music.setDuration();
+
+//        musicService.add(music);
+//         musicBizService.add(dto);
          return success(true);
+    }
+
+
+    @PostMapping("/upload")
+    public String uploadFile(@RequestParam("file") MultipartFile file) throws IOException, UnsupportedAudioFileException, CannotReadException, TagException, InvalidAudioFrameException, ReadOnlyFileException {
+        String id = idGenerator.getNextStr();
+        String fileName = saveFile(file, id);
+        int length = getMp3Length(fileName);
+        String fileNameWithoutExtension = getFileNameWithoutExtension(file.getOriginalFilename()).replace("周杰伦 - ", "");
+        log.info("length {} fileNameWithoutExtension {}", length, fileNameWithoutExtension);
+
+        Music music = new Music();
+        music.setId(id);
+        music.setMusicName(fileNameWithoutExtension);
+        music.setAlbumId("1");
+        music.setDuration(length*1000);
+
+        musicService.add(music);
+        // Do something with file name, length, and seconds
+        return "success";
+    }
+
+    @PostMapping("/uploadLyric")
+    public void handleFileUpload(@RequestParam("file") MultipartFile file) {
+        try {
+            String s = file.getOriginalFilename().replace("周杰伦 - ", "").replace(".lrc", "");
+
+            InputStream inputStream = file.getInputStream();
+            byte[] bytes = new byte[inputStream.available()];
+            inputStream.read(bytes);
+            String content = new String(bytes, "gbk");
+
+            Music music = getMusic(s);
+
+            Lyric lyric = new Lyric();
+            lyric.setLyric(content);
+            lyric.setId(music.getId());
+            lyricService.add(lyric);
+            System.out.println(content);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Music getMusic(String name){
+        LambdaQueryWrapper<Music> lambdaQuery = new LambdaQueryWrapper<>();
+        lambdaQuery.eq(Music::getMusicName, name);
+        Music music = musicService.getOne(lambdaQuery);
+        return music;
+    }
+
+    private String saveFile(MultipartFile file, String id) throws IOException {
+        String fileName = id+".mp3";
+        File savedFile = new File(mp3uploadDir + id+".mp3");
+        file.transferTo(savedFile);
+        return fileName;
+    }
+
+    private String getFileNameWithoutExtension(String fileName) {
+        Pattern pattern = Pattern.compile("(.*)\\.[^.]+$");
+        Matcher matcher = pattern.matcher(fileName);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        } else {
+            return fileName;
+        }
+    }
+
+    private int getMp3Length(String fileName) throws IOException, UnsupportedAudioFileException, CannotReadException, TagException, InvalidAudioFrameException, ReadOnlyFileException {
+        File file = new File(mp3uploadDir + fileName);
+        System.out.println(file.getAbsoluteFile().canRead());
+
+        AudioFile audioFile = AudioFileIO.read(file);
+        int size = audioFile.getAudioHeader().getTrackLength();
+
+        return size;
     }
 
     @GetMapping(value = "/page")

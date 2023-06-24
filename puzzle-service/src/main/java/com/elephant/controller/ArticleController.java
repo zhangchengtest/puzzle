@@ -15,6 +15,8 @@ import com.elephant.client.UserClient;
 import com.elephant.client.dto.UserDTO;
 import com.elephant.common.model.article.Article;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -301,7 +303,21 @@ public class ArticleController extends BaseController implements ArticleApi {
 
         List<ArticleBatchVO> result = null;
         if(days.size() > 365){
-            result = mapALL.keySet().stream().map(e -> {
+
+            List<String> dates = new ArrayList<>(mapALL.keySet());
+            Collections.sort(dates, (o1, o2) -> {
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                try {
+                    Date date1 = formatter.parse(o1);
+                    Date date2 = formatter.parse(o2);
+                    return date2.compareTo(date1);
+                } catch ( ParseException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
+            });
+
+            result = dates.stream().map(e -> {
 
                 ArticleBatchVO articleBatchVO = new ArticleBatchVO();
                 articleBatchVO.setTitle(e);
