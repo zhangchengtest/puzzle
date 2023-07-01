@@ -1,5 +1,7 @@
 package com.elephant.test;
 
+import cn.hutool.core.date.DateUtil;
+
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
@@ -8,8 +10,9 @@ import java.util.Date;
 
 public class DateTest {
     public static void main(String[] args) {
-        Date expireDate = addOneYearToDate(new Date());
-        System.out.println(expireDate); // 输出一年后的时间
+
+
+        System.out.println(   DateUtil.offsetMonth(new Date(), 4)); // 输出一年后的时间
     }
 
     public static Date addOneYearToDate(Date date) {

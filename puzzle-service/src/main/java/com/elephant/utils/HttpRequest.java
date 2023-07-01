@@ -88,7 +88,7 @@ public class HttpRequest {
 			URL realUrl = new URL(strURL);
 			conn = (HttpURLConnection) realUrl.openConnection();
 			conn.setRequestMethod("GET");
-			conn.addRequestProperty("Authorization", token);
+//			conn.addRequestProperty("Authorization", token);
 			conn.setDoInput(true);
 			if (StringUtils.isNotBlank(param)) {
 				conn.setDoOutput(true);
@@ -99,6 +99,7 @@ public class HttpRequest {
 			try {
 				in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			} catch (Exception e) {
+				logger.error("exception", e);
 				in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
 			}
 
@@ -108,7 +109,7 @@ public class HttpRequest {
 				result += line+ TAB;
 			}
 		} catch (Exception e) {
-			logger.warn("Send POST exception", e);
+			logger.error("Send GET exception", e);
 			e.printStackTrace();
 		} finally {
 			try {

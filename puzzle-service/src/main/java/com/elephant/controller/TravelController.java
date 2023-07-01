@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,11 +32,19 @@ public class TravelController extends BaseController {
 
     @GetMapping("/getCityId")
     @ApiOperation(value="获取详细信息", notes="根据url的id来获取详细信息")
-    public ResultVO<TravelVO> getByUserId(@SpringQueryMap final TravelDTO dto){
+    public ResultVO<TravelVO> getByUserId(@SpringQueryMap final TravelDTO dto) throws UnsupportedEncodingException {
+        log.info("request data {}", ObjectUtils.getJsonStringFromObject(dto));
         String url = "https://m.ctrip.com/restapi/h5api/globalsearch/search?action=gsonline" +
                 "&source=globalonline&keyword={}&t=1687580717685";
 
-        url = MessageFormatter.arrayFormat(url, new Object[]{URLEncoder.encode(dto.getKeyword())}).getMessage();
+        if(dto.getKeyword().contains("%")){
+            log.info("1");
+            url = MessageFormatter.arrayFormat(url, new Object[]{dto.getKeyword()}).getMessage();
+        }else{
+            log.info(URLEncoder.encode(dto.getKeyword(), Charset.defaultCharset()));
+            log.info(URLEncoder.encode(dto.getKeyword(), "UTF-8"));
+            url = MessageFormatter.arrayFormat(url, new Object[]{URLEncoder.encode(dto.getKeyword(), "UTF-8")}).getMessage();
+        }
         log.info(url);
         String data = HttpRequest.sendAuthGet(url, null, null);
         JSONObject obj = JSON.parseObject(data);

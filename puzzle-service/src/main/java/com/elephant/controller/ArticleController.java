@@ -285,6 +285,23 @@ public class ArticleController extends BaseController implements ArticleApi {
         List<UserAuth> userAuths = userClient.loadUserByIds(userDTO);
         Map<String, UserAuth> userAuthMap = userAuths.stream().collect(Collectors.toMap(UserAuth::getId, Function.identity()));
 
+        if(StringUtils.equals(dto.getCategory(), "fml")){
+            List<ArticleBatchVO> result = null;
+            result = articleVOList.stream().map(e -> {
+
+                ArticleBatchVO articleBatchVO = new ArticleBatchVO();
+                articleBatchVO.setTitle(e.getTitle());
+                List<ArticleVO> articleVOList1 = new ArrayList<>();
+
+                articleVOList1.add(e);
+                articleBatchVO.setArticles(articleVOList1);
+                return articleBatchVO;
+
+            }).collect(Collectors.toList());
+
+            return success(result);
+        }
+
 
         String end = articleVOList.get(0).getTitle();
         String start = articleVOList.get(articleVOList.size()-1).getTitle();

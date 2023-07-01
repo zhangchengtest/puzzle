@@ -18,6 +18,7 @@ import com.elephant.common.model.music.Music;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -34,6 +35,9 @@ import com.elephant.utils.ConvertUtils;
 import com.elephant.utils.ObjectUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BOMInputStream;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.exceptions.CannotReadException;
@@ -99,13 +103,18 @@ public class MusicController extends BaseController implements MusicApi {
         String id = idGenerator.getNextStr();
         String fileName = saveFile(file, id);
         int length = getMp3Length(fileName);
-        String fileNameWithoutExtension = getFileNameWithoutExtension(file.getOriginalFilename()).replace("周杰伦 - ", "");
+        String fileNameWithoutExtension = getFileNameWithoutExtension(file.getOriginalFilename());
+        String[] arr = fileNameWithoutExtension.split("-");
+        String artistName = arr[0].trim();
+        Artist artist = createArtist(artistName);
+        Album album = createAlumn(artistName, artist.getId());
+        String musicName = arr[1].trim();
         log.info("length {} fileNameWithoutExtension {}", length, fileNameWithoutExtension);
 
         Music music = new Music();
         music.setId(id);
-        music.setMusicName(fileNameWithoutExtension);
-        music.setAlbumId("1");
+        music.setMusicName(musicName);
+        music.setAlbumId(album.getId());
         music.setDuration(length*1000);
 
         musicService.add(music);
@@ -113,25 +122,95 @@ public class MusicController extends BaseController implements MusicApi {
         return "success";
     }
 
+    public Artist createArtist(String name){
+
+        Artist artist = getArtist(name);
+        if(artist != null){
+            return artist;
+        }
+        String id = idGenerator.getNextStr();
+        Artist artist1 = new Artist();
+        artist1.setId(id);
+        artist1.setArtistName(name);
+        artistService.add(artist1);
+        return artist1;
+    }
+
+    public Artist getArtist(String name){
+        LambdaQueryWrapper<Artist> lambdaQuery = new LambdaQueryWrapper<>();
+        lambdaQuery.eq(Artist::getArtistName, name);
+        Artist artist = artistService.getOne(lambdaQuery);
+        return artist;
+    }
+
+    public Album createAlumn(String name, String artistId){
+
+        Album artist = getAlbum(name);
+        if(artist != null){
+            return artist;
+        }
+        Album artist1 = new Album();
+        artist1.setId(artistId);
+        artist1.setArtistId(artistId);
+        artist1.setTitle(name);
+        artist1.setImg("http://peer.punengshuo.com/common/2023-06-18/jay.jpeg");
+        albumService.add(artist1);
+        return artist1;
+    }
+
+    public Album getAlbum(String name){
+        LambdaQueryWrapper<Album> lambdaQuery = new LambdaQueryWrapper<>();
+        lambdaQuery.eq(Album::getTitle, name);
+        Album artist = albumService.getOne(lambdaQuery);
+        return artist;
+    }
+
     @PostMapping("/uploadLyric")
     public void handleFileUpload(@RequestParam("file") MultipartFile file) {
         try {
-            String s = file.getOriginalFilename().replace("周杰伦 - ", "").replace(".lrc", "");
-
+            String s = file.getOriginalFilename().replace(".txt", "").replace(".lrc", "");
+            String[] arr = s.split("-");
+            String artistName = arr[0].trim();
+            String musicName = arr[1].trim();
             InputStream inputStream = file.getInputStream();
-            byte[] bytes = new byte[inputStream.available()];
-            inputStream.read(bytes);
-            String content = new String(bytes, "gbk");
 
-            Music music = getMusic(s);
+            String content = detect(inputStream);
 
-            Lyric lyric = new Lyric();
-            lyric.setLyric(content);
-            lyric.setId(music.getId());
-            lyricService.add(lyric);
-            System.out.println(content);
+            Music music = getMusic(musicName);
+
+            Lyric old = getLyric(music.getId());
+            if(old != null){
+                Lyric lyric = new Lyric();
+                lyric.setLyric(content);
+                lyric.setId(music.getId());
+                lyricService.modify(lyric);
+                System.out.println(content);
+            }else{
+                Lyric lyric = new Lyric();
+                lyric.setLyric(content);
+                lyric.setId(music.getId());
+                lyricService.add(lyric);
+                System.out.println(content);
+            }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    public Lyric getLyric(String id){
+        LambdaQueryWrapper<Lyric> lambdaQuery = new LambdaQueryWrapper<>();
+        lambdaQuery.eq(Lyric::getId, id);
+        Lyric old = lyricService.getOne(lambdaQuery);
+        return old;
+    }
+
+    public String detect(InputStream inputStream) throws IOException {
+        try(BOMInputStream bomInputStream = new BOMInputStream(inputStream, false, ByteOrderMark.UTF_8,
+                ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE)) {
+            String charset = bomInputStream.getBOMCharsetName();
+            if(charset == null){
+                charset = "gbk";
+            }
+            return IOUtils.toString(bomInputStream, charset);
         }
     }
 
