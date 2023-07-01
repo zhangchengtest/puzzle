@@ -126,6 +126,25 @@ public class ArticleController extends BaseController implements ArticleApi {
         return sb.toString();
     }
 
+    public static String urltoMovie(String text) {
+        String pattern = "\\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]";
+
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(text);
+
+        StringBuffer sb = new StringBuffer();
+        while(matcher.find()) {
+            String url = matcher.group();
+            String link = "";
+            url = "http://video.punengshuo.com/?url="+url;
+            link = "[" + url + "](" + url + ")";
+            matcher.appendReplacement(sb, link);
+        }
+
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
 
     @PostMapping("/add")
     public ResultVO<Boolean> addArticle(@RequestBody ArticleDTO articleDTO) {
@@ -133,7 +152,7 @@ public class ArticleController extends BaseController implements ArticleApi {
         int chapter = articleDTO.getChapter();
         String title = articleDTO.getTitle();
         String content = articleDTO.getContent();
-        content = urlAndImageToMarkdown(content);
+//        content = urlAndImageToMarkdown(content);
         String category = articleDTO.getCategory();
 
         LambdaQueryWrapper<Article> lambdaQuery = new LambdaQueryWrapper<>();
@@ -170,7 +189,7 @@ public class ArticleController extends BaseController implements ArticleApi {
     }
 
     @GetMapping("/see")
-    public  ResultVO<Article> seeDinary(@SpringQueryMap ArticleDTO articleDTO) {
+    public  ResultVO<Article> see(@SpringQueryMap ArticleDTO articleDTO) {
 
         String title = articleDTO.getTitle();
         String category = articleDTO.getCategory();
@@ -215,6 +234,7 @@ public class ArticleController extends BaseController implements ArticleApi {
 
         return success(old);
     }
+
 
     @Override
     public ResultVO<ArticleVO> get(final String id){
@@ -293,6 +313,24 @@ public class ArticleController extends BaseController implements ArticleApi {
                 articleBatchVO.setTitle(e.getTitle());
                 List<ArticleVO> articleVOList1 = new ArrayList<>();
 
+                articleVOList1.add(e);
+                articleBatchVO.setArticles(articleVOList1);
+                return articleBatchVO;
+
+            }).collect(Collectors.toList());
+
+            return success(result);
+        }
+
+        if(StringUtils.equals(dto.getCategory(), "电影")){
+            List<ArticleBatchVO> result = null;
+            result = articleVOList.stream().map(e -> {
+
+                ArticleBatchVO articleBatchVO = new ArticleBatchVO();
+                articleBatchVO.setTitle(e.getTitle());
+                List<ArticleVO> articleVOList1 = new ArrayList<>();
+
+                e.setContent(urltoMovie(e.getContent()));
                 articleVOList1.add(e);
                 articleBatchVO.setArticles(articleVOList1);
                 return articleBatchVO;
