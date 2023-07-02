@@ -313,6 +313,8 @@ public class ArticleController extends BaseController implements ArticleApi {
                 articleBatchVO.setTitle(e.getTitle());
                 List<ArticleVO> articleVOList1 = new ArrayList<>();
 
+                String replacedString = e.getContent().replace("\n", "<br>");
+                e.setContent(replacedString);
                 articleVOList1.add(e);
                 articleBatchVO.setArticles(articleVOList1);
                 return articleBatchVO;

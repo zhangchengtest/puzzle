@@ -26,7 +26,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -49,16 +51,20 @@ public class DamaiController extends BaseController {
     String _m_h5_tk = "";
     String _m_h5_tk_enc = "";
 
+    Integer page = 1;
+
     String token = "hhhhh";
-    private HttpResponse req() throws IOException, InterruptedException {
+    private HttpResponse req(Integer pageIndex) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
         String appKey = "12574478";
-        String data = "{\"cityId\":\"0\",\"longitude\":0,\"latitude\":0,\"pageIndex\":\"1\",\"pageSize\":10,\"sortType\":\"3\",\"categoryId\":\"1\",\"startDate\":\"\",\"endDate\":\"\",\"option\":31,\"sourceType\":21,\"returnItemOption\":4,\"dmChannel\":\"damai@damaih5_h5\"}";
+        String data = "{\"cityId\":\"0\",\"longitude\":0,\"latitude\":0,\"pageIndex\":\""+ pageIndex +"\"," +
+                "\"pageSize\":10,\"sortType\":\"3\",\"categoryId\":\"1\",\"startDate\":\"\",\"endDate\":\"\",\"option\":31,\"sourceType\":21,\"returnItemOption\":4,\"dmChannel\":\"damai@damaih5_h5\"}";
 
         long timestamp = System.currentTimeMillis(); //1688227441531
         String sign = generateSign(token, String.valueOf(timestamp), appKey, data);
+        data = URLEncoder.encode(data, "utf-8");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(
                         "https://mtop.damai.cn/h5/mtop.damai.wireless.search.search/1.0/?jsv=2.7.2&appKey=12574478" +
@@ -66,7 +72,7 @@ public class DamaiController extends BaseController {
                                 "&sign=" +sign+
                                 "&type=originaljson&dataType=json&v=1.0&H5Request=true&AntiCreep=true&AntiFlood=true&api=mtop.damai.wireless.search.search&" +
                                 "requestStart=" + timestamp+
-                                "&data=%7B%22cityId%22%3A%220%22%2C%22longitude%22%3A0%2C%22latitude%22%3A0%2C%22pageIndex%22%3A%221%22%2C%22pageSize%22%3A10%2C%22sortType%22%3A%223%22%2C%22categoryId%22%3A%221%22%2C%22startDate%22%3A%22%22%2C%22endDate%22%3A%22%22%2C%22option%22%3A31%2C%22sourceType%22%3A21%2C%22returnItemOption%22%3A4%2C%22dmChannel%22%3A%22damai%40damaih5_h5%22%7D"
+                                "&data="+data
                 ))
                 .GET()
 //                .setHeader("authority", "mtop.damai.cn")
@@ -126,8 +132,18 @@ public class DamaiController extends BaseController {
 
     @GetMapping("/fuck")
     public ResultVO<TravelVO> fuck(@SpringQueryMap final TravelDTO dto) throws IOException, InterruptedException {
+        page = 1;
+        for(int dd = 0; dd < 3; dd++){
+            realFuck();
+        }
+        page = 1;
 
-        HttpResponse response = req();
+        TravelVO travelVO = new TravelVO();
+        return success(travelVO);
+    }
+
+    public void realFuck() throws IOException, InterruptedException {
+        HttpResponse response = req(page);
         String responseBody = (String) response.body();
 
         log.info(responseBody);
@@ -149,17 +165,13 @@ public class DamaiController extends BaseController {
                 log.info(e);
             });
 
-             response = req();
-             responseBody = (String) response.body();
+            response = req(page);
+            responseBody = (String) response.body();
 
             save(responseBody);
         }else {
             save(responseBody);
         }
-
-
-        TravelVO travelVO = new TravelVO();
-        return success(travelVO);
     }
 
     public void save(String responseBody){
@@ -198,6 +210,7 @@ public class DamaiController extends BaseController {
             article.setCreateDate(new Date());
             articleService.add(article);
         }
+        page++;
     }
 
     public Article getArticle(String title){
@@ -211,22 +224,25 @@ public class DamaiController extends BaseController {
     }
 
 
-    public static void main(String[] args) {
-        String token = "ce41b196f080310855dd7c72a53acb8a";
-        String appKey = "12574478";
-        String data = "{\"cityId\":\"0\",\"longitude\":0,\"latitude\":0,\"pageIndex\":\"1\",\"pageSize\":10,\"sortType\":\"3\",\"categoryId\":\"1\",\"startDate\":\"\",\"endDate\":\"\",\"option\":31,\"sourceType\":21,\"returnItemOption\":4,\"dmChannel\":\"damai@damaih5_h5\"}";
-
-        long timestamp = System.currentTimeMillis();
-        log.info(timestamp+"");
-        String sign = generateSign(token, String.valueOf(timestamp), appKey, data);
-
-        log.info(sign);
+    public static void main(String[] args) throws UnsupportedEncodingException {
+//        String token = "ce41b196f080310855dd7c72a53acb8a";
+//        String appKey = "12574478";
+//        String data = "{\"cityId\":\"0\",\"longitude\":0,\"latitude\":0,\"pageIndex\":\"1\",\"pageSize\":10,\"sortType\":\"3\",\"categoryId\":\"1\",\"startDate\":\"\",\"endDate\":\"\",\"option\":31,\"sourceType\":21,\"returnItemOption\":4,\"dmChannel\":\"damai@damaih5_h5\"}";
 //
-        String cookieString = "_m_h5_tk_enc=c530b89bfa2d676da678d4551402d02f;Path=/;Domain=damai.cn;Max-Age=604800;SameSite=None;Secure";
-        String cookieName = "_m_h5_tk";
+//        long timestamp = System.currentTimeMillis();
+//        log.info(timestamp+"");
+//        String sign = generateSign(token, String.valueOf(timestamp), appKey, data);
+//
+//        log.info(sign);
+////
+//        String cookieString = "_m_h5_tk_enc=c530b89bfa2d676da678d4551402d02f;Path=/;Domain=damai.cn;Max-Age=604800;SameSite=None;Secure";
+//        String cookieName = "_m_h5_tk";
+//
+//        String cookieValue = getCookieValue(cookieName, cookieString);
+//        log.info("Cookie Value: " + cookieValue);
 
-        String cookieValue = getCookieValue(cookieName, cookieString);
-        log.info("Cookie Value: " + cookieValue);
+        String data = "{\"cityId\":\"0\",\"longitude\":0,\"latitude\":0,\"pageIndex\":\"1\",\"pageSize\":10,\"sortType\":\"3\",\"categoryId\":\"1\",\"startDate\":\"\",\"endDate\":\"\",\"option\":31,\"sourceType\":21,\"returnItemOption\":4,\"dmChannel\":\"damai@damaih5_h5\"}";
+        System.out.println(URLEncoder.encode(data, "utf-8"));
     }
 
 
