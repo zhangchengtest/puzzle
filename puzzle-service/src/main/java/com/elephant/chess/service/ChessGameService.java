@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class GameService {
+public class ChessGameService {
     private final RedisTemplate<String, String> redisTemplate;
 
 

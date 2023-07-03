@@ -40,6 +40,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ *请求地址
+ * https://m.damai.cn/damai/category/index.html?categoryId=1&clicktitle=%E6%BC%94%E5%94%B1%E4%BC%9A&spm=a2o71.home.icon.ditem_0&sqm=dianying.h5.unknown.value
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/damai")

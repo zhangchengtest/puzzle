@@ -3,9 +3,8 @@ package com.elephant.websocket;
 import com.elephant.chess.Chessboard;
 import com.elephant.chess.Position;
 import com.elephant.chess.SideEnum;
-import com.elephant.chess.service.GameService;
+import com.elephant.chess.service.ChessGameService;
 import com.elephant.utils.ObjectUtils;
-import com.elephant.websocket.dto.ChatRoom;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,7 +21,7 @@ import java.util.*;
 @Slf4j
 public class ChessHandler extends TextWebSocketHandler {
     @Autowired
-    private GameService gameService;
+    private ChessGameService gameService;
 
     private static Map<String, Set<WebSocketSession>> rooms = new HashMap<>();
 
