@@ -19,8 +19,11 @@ public class Game implements IBasePO<String> {
     @TableId("id")
     private String id;
     private String title;
+    private String playDay;
     private String playerOne;
+    private String countryOne;
     private String playerTwo;
+    private String countryTwo;
     private String playTime;
     private String score;
     /**

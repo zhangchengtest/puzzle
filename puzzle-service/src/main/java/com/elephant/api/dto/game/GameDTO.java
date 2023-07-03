@@ -31,4 +31,10 @@ public class GameDTO implements Serializable {
     @ApiModelProperty("状态：1-启用 0-停用 -1-删除")
     private Integer status;
 
+    @ApiModelProperty("页码")
+    private Integer pageNum;
+
+    @ApiModelProperty("页大小")
+    private Integer pageSize;
+
 }
