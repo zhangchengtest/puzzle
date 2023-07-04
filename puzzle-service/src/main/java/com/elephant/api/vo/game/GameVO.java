@@ -20,12 +20,38 @@ import java.util.Date;
 public class GameVO implements Serializable {
 
     private String title;
-    private String players;
+
+    private String playerOne;
+
+    private String playerTwo;
 
     private String playTime;
+    private String oneScore1;
+    private String oneScore2;
+    private String oneScore3;
+    private String oneScore4;
+    private String oneScore5;
+    private String oneScore6;
+    private String twoScore1;
+    private String twoScore2;
+    private String twoScore3;
+    private String twoScore4;
+    private String twoScore5;
+    private String twoScore6;
+    private String odd1;
+    private String odd2;
 
-    private String score;
 
     private Integer china;
+
+    private String countryOne;
+
+    private String countryTwo;
+
+    private String playerOrder1;
+
+    private String playerOrder2;
+
+    private String history;
 
 }
